@@ -115,6 +115,9 @@ const VotePage = ({
   const abstainPercentage = proposal && totalVotes ? (proposal.abstainCount * 100) / totalVotes : 0;
 
   // Only count available votes as of the proposal created block
+  console.log("logging created block");
+  console.log(proposal);
+  console.log(proposal?.createdBlock);
   const availableVotes = useUserVotesAsOfBlock(proposal?.createdBlock ?? undefined);
 
   const currentQuorum = useCurrentQuorum(
