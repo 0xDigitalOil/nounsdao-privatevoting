@@ -30,7 +30,7 @@ task('deploy-local', 'Deploy contracts to hardhat')
   )
   .addOptionalParam('auctionDuration', 'The auction duration (seconds)', 60 * 2, types.int) // Default: 2 minutes
   .addOptionalParam('timelockDelay', 'The timelock delay (seconds)', 60 * 5, types.int) // Default: 5 minutes
-  .addOptionalParam('votingPeriod', 'The voting period (blocks)', 5 * 60, types.int) // Default: 5 minutes
+  .addOptionalParam('votingPeriod', 'The voting period (blocks)', 20, types.int) // Default: 20 blocks
   .addOptionalParam('votingDelay', 'The voting delay (blocks)', 1, types.int) // Default: 1 block
   .addOptionalParam('proposalThresholdBps', 'The proposal threshold (basis points)', 500, types.int) // Default: 5%
   .addOptionalParam(
