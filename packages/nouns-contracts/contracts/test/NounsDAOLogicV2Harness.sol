@@ -12,7 +12,8 @@ contract NounsDAOLogicV2Harness is NounsDAOLogicV2 {
         uint256 votingPeriod_,
         uint256 votingDelay_,
         uint256 proposalThresholdBPS_,
-        DynamicQuorumParams calldata dynamicQuorumParams_
+        DynamicQuorumParams calldata dynamicQuorumParams_,
+        address privateVotingContract_
     ) public override {
         require(msg.sender == admin, 'NounsDAO::initialize: admin only');
         require(address(timelock) == address(0), 'NounsDAO::initialize: can only initialize once');
@@ -23,6 +24,7 @@ contract NounsDAOLogicV2Harness is NounsDAOLogicV2 {
         votingPeriod = votingPeriod_;
         votingDelay = votingDelay_;
         proposalThresholdBPS = proposalThresholdBPS_;
+        PRIVATE_VOTING = privateVotingContract_;
         _setDynamicQuorumParams(
             dynamicQuorumParams_.minQuorumVotesBPS,
             dynamicQuorumParams_.maxQuorumVotesBPS,

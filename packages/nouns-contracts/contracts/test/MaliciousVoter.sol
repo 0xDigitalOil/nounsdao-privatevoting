@@ -24,9 +24,9 @@ contract MaliciousVoter {
 
     function castVote() public {
         if (useReason) {
-            dao.castRefundableVoteWithReason(proposalId, support, 'some reason');
+            //dao.castRefundableVoteWithReason(proposalId, support, 'some reason');
         } else {
-            dao.castRefundableVote(proposalId, support);
+            //dao.castRefundableVote(proposalId, support);
         }
     }
 

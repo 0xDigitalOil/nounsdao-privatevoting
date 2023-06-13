@@ -50,7 +50,8 @@ contract NounsDAOProxyV2 is NounsDAOStorageV2, NounsDAOEvents {
         uint256 votingPeriod_,
         uint256 votingDelay_,
         uint256 proposalThresholdBPS_,
-        DynamicQuorumParams memory dynamicQuorumParams_
+        DynamicQuorumParams memory dynamicQuorumParams_,
+        address privateVotingContract_
     ) {
         // Admin set to msg.sender for initialization
         admin = msg.sender;
@@ -58,14 +59,15 @@ contract NounsDAOProxyV2 is NounsDAOStorageV2, NounsDAOEvents {
         delegateTo(
             implementation_,
             abi.encodeWithSignature(
-                'initialize(address,address,address,uint256,uint256,uint256,(uint16,uint16,uint32))',
+                'initialize(address,address,address,uint256,uint256,uint256,(uint16,uint16,uint32),address)',
                 timelock_,
                 nouns_,
                 vetoer_,
                 votingPeriod_,
                 votingDelay_,
                 proposalThresholdBPS_,
-                dynamicQuorumParams_
+                dynamicQuorumParams_,
+                privateVotingContract_
             )
         );
 

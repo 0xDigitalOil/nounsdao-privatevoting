@@ -53,8 +53,10 @@
 pragma solidity ^0.8.6;
 
 import './NounsDAOInterfaces.sol';
+import '../interfaces/IZKVote.sol';
+import '../interfaces/IDAOProxy.sol';
 
-contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
+contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2, IDAOProxy {
     /// @notice The name of this contract
     string public constant name = 'Nouns DAO';
 
@@ -121,6 +123,8 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
     error VetoerBurned();
     error CantVetoExecutedProposal();
     error CantCancelExecutedProposal();
+    error PrivateVotingContractOnly();
+    error MaxTotalVotingWeightExceeded(); // When number of nouns is greater
 
     /**
      * @notice Used to initialize the contract during delegator contructor
@@ -131,6 +135,7 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      * @param votingDelay_ The initial voting delay
      * @param proposalThresholdBPS_ The initial proposal threshold in basis points
      * @param dynamicQuorumParams_ The initial dynamic quorum parameters
+     * @param privateVotingContract_ The contract that checks private voting proofs and tallies voting outcome
      */
     function initialize(
         address timelock_,
@@ -139,7 +144,8 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         uint256 votingPeriod_,
         uint256 votingDelay_,
         uint256 proposalThresholdBPS_,
-        DynamicQuorumParams calldata dynamicQuorumParams_
+        DynamicQuorumParams calldata dynamicQuorumParams_,
+        address privateVotingContract_
     ) public virtual {
         require(address(timelock) == address(0), 'NounsDAO::initialize: can only initialize once');
         if (msg.sender != admin) {
@@ -147,6 +153,7 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         }
         require(timelock_ != address(0), 'NounsDAO::initialize: invalid timelock address');
         require(nouns_ != address(0), 'NounsDAO::initialize: invalid nouns address');
+        require(privateVotingContract_ != address(0), 'NounsDAO::initialize: invalid private voting address');
         require(
             votingPeriod_ >= MIN_VOTING_PERIOD && votingPeriod_ <= MAX_VOTING_PERIOD,
             'NounsDAO::initialize: invalid voting period'
@@ -170,6 +177,7 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         votingPeriod = votingPeriod_;
         votingDelay = votingDelay_;
         proposalThresholdBPS = proposalThresholdBPS_;
+        PRIVATE_VOTING = privateVotingContract_;
         _setDynamicQuorumParams(
             dynamicQuorumParams_.minQuorumVotesBPS,
             dynamicQuorumParams_.maxQuorumVotesBPS,
@@ -222,13 +230,13 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
 
         temp.latestProposalId = latestProposalIds[msg.sender];
         if (temp.latestProposalId != 0) {
-            ProposalState proposersLatestProposalState = state(temp.latestProposalId);
+            ProposalStatePrivate proposersLatestProposalState = state(temp.latestProposalId);
             require(
-                proposersLatestProposalState != ProposalState.Active,
+                proposersLatestProposalState != ProposalStatePrivate.Active,
                 'NounsDAO::propose: one live proposal per proposer, found an already active proposal'
             );
             require(
-                proposersLatestProposalState != ProposalState.Pending,
+                proposersLatestProposalState != ProposalStatePrivate.Pending,
                 'NounsDAO::propose: one live proposal per proposer, found an already pending proposal'
             );
         }
@@ -258,6 +266,11 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         newProposal.creationBlock = block.number;
 
         latestProposalIds[newProposal.proposer] = newProposal.id;
+
+        // Ensure the ZK vote contract can sustain current number of Nouns that can vote
+        uint256 maxTotalVotingWeight = IZKVote(PRIVATE_VOTING).maxTotalVotingWeight();
+        if (nouns.totalSupply() > maxTotalVotingWeight) revert MaxTotalVotingWeightExceeded();
+        IZKVote(PRIVATE_VOTING).setupVote(newProposal.id, newProposal.endBlock);
 
         /// @notice Maintains backwards compatibility with GovernorBravo events
         emit ProposalCreated(
@@ -297,7 +310,7 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      */
     function queue(uint256 proposalId) external {
         require(
-            state(proposalId) == ProposalState.Succeeded,
+            state(proposalId) == ProposalStatePrivate.Succeeded,
             'NounsDAO::queue: proposal can only be queued if it is succeeded'
         );
         Proposal storage proposal = _proposals[proposalId];
@@ -335,7 +348,7 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      */
     function execute(uint256 proposalId) external {
         require(
-            state(proposalId) == ProposalState.Queued,
+            state(proposalId) == ProposalStatePrivate.Queued,
             'NounsDAO::execute: proposal can only be executed if it is queued'
         );
         Proposal storage proposal = _proposals[proposalId];
@@ -357,7 +370,7 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      * @param proposalId The id of the proposal to cancel
      */
     function cancel(uint256 proposalId) external {
-        if (state(proposalId) == ProposalState.Executed) {
+        if (state(proposalId) == ProposalStatePrivate.Executed) {
             revert CantCancelExecutedProposal();
         }
 
@@ -380,39 +393,6 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         }
 
         emit ProposalCanceled(proposalId);
-    }
-
-    /**
-     * @notice Vetoes a proposal only if sender is the vetoer and the proposal has not been executed.
-     * @param proposalId The id of the proposal to veto
-     */
-    function veto(uint256 proposalId) external {
-        if (vetoer == address(0)) {
-            revert VetoerBurned();
-        }
-
-        if (msg.sender != vetoer) {
-            revert VetoerOnly();
-        }
-
-        if (state(proposalId) == ProposalState.Executed) {
-            revert CantVetoExecutedProposal();
-        }
-
-        Proposal storage proposal = _proposals[proposalId];
-
-        proposal.vetoed = true;
-        for (uint256 i = 0; i < proposal.targets.length; i++) {
-            timelock.cancelTransaction(
-                proposal.targets[i],
-                proposal.values[i],
-                proposal.signatures[i],
-                proposal.calldatas[i],
-                proposal.eta
-            );
-        }
-
-        emit ProposalVetoed(proposalId);
     }
 
     /**
@@ -452,27 +432,29 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      * @param proposalId The id of the proposal
      * @return Proposal state
      */
-    function state(uint256 proposalId) public view returns (ProposalState) {
+    function state(uint256 proposalId) public view returns (ProposalStatePrivate) {
         require(proposalCount >= proposalId, 'NounsDAO::state: invalid proposal id');
         Proposal storage proposal = _proposals[proposalId];
         if (proposal.vetoed) {
-            return ProposalState.Vetoed;
+            return ProposalStatePrivate.Vetoed;
         } else if (proposal.canceled) {
-            return ProposalState.Canceled;
+            return ProposalStatePrivate.Canceled;
         } else if (block.number <= proposal.startBlock) {
-            return ProposalState.Pending;
+            return ProposalStatePrivate.Pending;
         } else if (block.number <= proposal.endBlock) {
-            return ProposalState.Active;
+            return ProposalStatePrivate.Active;
+        } else if (proposal.forVotes == 0 && proposal.againstVotes == 0 && proposal.abstainVotes == 0) {
+            return ProposalStatePrivate.Tallying;
         } else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes(proposal.id)) {
-            return ProposalState.Defeated;
+            return ProposalStatePrivate.Defeated;
         } else if (proposal.eta == 0) {
-            return ProposalState.Succeeded;
+            return ProposalStatePrivate.Succeeded;
         } else if (proposal.executed) {
-            return ProposalState.Executed;
+            return ProposalStatePrivate.Executed;
         } else if (block.timestamp >= proposal.eta + timelock.GRACE_PERIOD()) {
-            return ProposalState.Expired;
+            return ProposalStatePrivate.Expired;
         } else {
-            return ProposalState.Queued;
+            return ProposalStatePrivate.Queued;
         }
     }
 
@@ -506,11 +488,16 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
 
     /**
      * @notice Cast a vote for a proposal
-     * @param proposalId The id of the proposal to vote on
-     * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      */
-    function castVote(uint256 proposalId, uint8 support) external {
-        emit VoteCast(msg.sender, proposalId, support, castVoteInternal(msg.sender, proposalId, support), '');
+    function castVote(
+        uint256 proposalId,         
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c
+        ) external {
+        emit VoteCastPrivate(msg.sender, proposalId, castVoteInternal(msg.sender, proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c), '');
     }
 
     /**
@@ -520,11 +507,16 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      * No refund is sent when the DAO's balance is empty. No refund is sent to users with no votes.
      * Voting takes place regardless of refund success.
      * @param proposalId The id of the proposal to vote on
-     * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      * @dev Reentrancy is defended against in `castVoteInternal` at the `receipt.hasVoted == false` require statement.
      */
-    function castRefundableVote(uint256 proposalId, uint8 support) external {
-        castRefundableVoteInternal(proposalId, support, '');
+    function castRefundableVote(
+        uint256 proposalId, 
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c) external {
+        castRefundableVoteInternal(proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c, '');
     }
 
     /**
@@ -534,33 +526,39 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      * No refund is sent when the DAO's balance is empty. No refund is sent to users with no votes.
      * Voting takes place regardless of refund success.
      * @param proposalId The id of the proposal to vote on
-     * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      * @param reason The reason given for the vote by the voter
      * @dev Reentrancy is defended against in `castVoteInternal` at the `receipt.hasVoted == false` require statement.
      */
     function castRefundableVoteWithReason(
         uint256 proposalId,
-        uint8 support,
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c,
         string calldata reason
     ) external {
-        castRefundableVoteInternal(proposalId, support, reason);
+        castRefundableVoteInternal(proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c, reason);
     }
 
     /**
      * @notice Internal function that carries out refundable voting logic
      * @param proposalId The id of the proposal to vote on
-     * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      * @param reason The reason given for the vote by the voter
      * @dev Reentrancy is defended against in `castVoteInternal` at the `receipt.hasVoted == false` require statement.
      */
     function castRefundableVoteInternal(
         uint256 proposalId,
-        uint8 support,
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c,
         string memory reason
     ) internal {
         uint256 startGas = gasleft();
-        uint96 votes = castVoteInternal(msg.sender, proposalId, support);
-        emit VoteCast(msg.sender, proposalId, support, votes, reason);
+        uint96 votes = castVoteInternal(msg.sender, proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c);
+        emit VoteCastPrivate(msg.sender, proposalId, votes, reason);
         if (votes > 0) {
             _refundGas(startGas);
         }
@@ -569,15 +567,18 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
     /**
      * @notice Cast a vote for a proposal with a reason
      * @param proposalId The id of the proposal to vote on
-     * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      * @param reason The reason given for the vote by the voter
      */
     function castVoteWithReason(
         uint256 proposalId,
-        uint8 support,
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c,
         string calldata reason
     ) external {
-        emit VoteCast(msg.sender, proposalId, support, castVoteInternal(msg.sender, proposalId, support), reason);
+        emit VoteCastPrivate(msg.sender, proposalId, castVoteInternal(msg.sender, proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c), reason);
     }
 
     /**
@@ -586,7 +587,11 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
      */
     function castVoteBySig(
         uint256 proposalId,
-        uint8 support,
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -594,27 +599,30 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         bytes32 domainSeparator = keccak256(
             abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainIdInternal(), address(this))
         );
-        bytes32 structHash = keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support));
+        bytes32 structHash = keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c));
         bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
         address signatory = ecrecover(digest, v, r, s);
         require(signatory != address(0), 'NounsDAO::castVoteBySig: invalid signature');
-        emit VoteCast(signatory, proposalId, support, castVoteInternal(signatory, proposalId, support), '');
+        //emit VoteCastPrivate(signatory, proposalId, castVoteInternal(signatory, proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c), '');
+        // @dev leaving out event emission for now as we get 'stack too deep' errors
+        castVoteInternal(signatory, proposalId, voter_R_i, voter_M_i, proof_a, proof_b, proof_c);
     }
 
     /**
      * @notice Internal function that caries out voting logic
      * @param voter The voter that is casting their vote
-     * @param proposalId The id of the proposal to vote on
-     * @param support The support value for the vote. 0=against, 1=for, 2=abstain
      * @return The number of votes cast
      */
     function castVoteInternal(
         address voter,
         uint256 proposalId,
-        uint8 support
+        uint[2][3] calldata voter_R_i, 
+        uint[2][3] calldata voter_M_i,
+        uint256[2] calldata proof_a,
+        uint256[2][2] calldata proof_b,
+        uint256[2] calldata proof_c
     ) internal returns (uint96) {
-        require(state(proposalId) == ProposalState.Active, 'NounsDAO::castVoteInternal: voting is closed');
-        require(support <= 2, 'NounsDAO::castVoteInternal: invalid vote type');
+        require(state(proposalId) == ProposalStatePrivate.Active, 'NounsDAO::castVoteInternal: voting is closed');
         Proposal storage proposal = _proposals[proposalId];
         Receipt storage receipt = proposal.receipts[voter];
         require(receipt.hasVoted == false, 'NounsDAO::castVoteInternal: voter already voted');
@@ -622,20 +630,24 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         /// @notice: Unlike GovernerBravo, votes are considered from the block the proposal was created in order to normalize quorumVotes and proposalThreshold metrics
         uint96 votes = nouns.getPriorVotes(voter, proposalCreationBlock(proposal));
 
-        if (support == 0) {
-            proposal.againstVotes = proposal.againstVotes + votes;
-        } else if (support == 1) {
-            proposal.forVotes = proposal.forVotes + votes;
-        } else if (support == 2) {
-            proposal.abstainVotes = proposal.abstainVotes + votes;
-        }
+        IZKVote(PRIVATE_VOTING).castPrivateVote(proposalId, votes, voter_R_i, voter_M_i, proof_a, proof_b, proof_c);
 
-        receipt.hasVoted = true;
-        receipt.support = support;
+        receipt.hasVoted = true; // PRIVATE_VOTING will revert if vote is invalid
         receipt.votes = votes;
 
         return votes;
     }
+
+    function receiveVoteTally(uint256 proposalId, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes) external {
+        if (msg.sender != PRIVATE_VOTING) {
+            revert PrivateVotingContractOnly();
+        }
+        _proposals[proposalId].forVotes = forVotes;
+        _proposals[proposalId].againstVotes = againstVotes;
+        _proposals[proposalId].abstainVotes = abstainVotes;
+
+        emit VoteTallied(block.number, proposalId, forVotes, againstVotes, abstainVotes);
+    }    
 
     /**
      * @notice Admin function for setting the voting delay
@@ -815,19 +827,6 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         emit QuorumCoefficientSet(oldParams.quorumCoefficient, params.quorumCoefficient);
     }
 
-    function _withdraw() external returns (uint256, bool) {
-        if (msg.sender != admin) {
-            revert AdminOnly();
-        }
-
-        uint256 amount = address(this).balance;
-        (bool sent, ) = msg.sender.call{ value: amount }('');
-
-        emit Withdraw(amount, sent);
-
-        return (amount, sent);
-    }
-
     /**
      * @notice Begins transfer of admin rights. The newPendingAdmin must call `_acceptAdmin` to finalize the transfer.
      * @dev Admin function to begin change of admin. The newPendingAdmin must call `_acceptAdmin` to finalize the transfer.
@@ -891,23 +890,6 @@ contract NounsDAOLogicV2 is NounsDAOStorageV2, NounsDAOEventsV2 {
         // Update vetoer
         emit NewVetoer(vetoer, pendingVetoer);
         vetoer = pendingVetoer;
-
-        // Clear the pending value
-        emit NewPendingVetoer(pendingVetoer, address(0));
-        pendingVetoer = address(0);
-    }
-
-    /**
-     * @notice Burns veto priviledges
-     * @dev Vetoer function destroying veto power forever
-     */
-    function _burnVetoPower() public {
-        // Check caller is vetoer
-        require(msg.sender == vetoer, 'NounsDAO::_burnVetoPower: vetoer only');
-
-        // Update vetoer to 0x0
-        emit NewVetoer(vetoer, address(0));
-        vetoer = address(0);
 
         // Clear the pending value
         emit NewPendingVetoer(pendingVetoer, address(0));

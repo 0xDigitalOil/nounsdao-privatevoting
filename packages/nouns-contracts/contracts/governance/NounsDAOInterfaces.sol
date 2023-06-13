@@ -124,6 +124,21 @@ contract NounsDAOEventsV2 is NounsDAOEvents {
 
     /// @notice Emitted when pendingVetoer is changed
     event NewPendingVetoer(address oldPendingVetoer, address newPendingVetoer);
+    
+  /// @notice An event emitted when a vote has been cast on a proposal
+    /// @param voter The address which casted a vote
+    /// @param proposalId The proposal id which was voted on
+    /// @param votes Number of votes which were cast by the voter
+    /// @param reason The reason given for the vote by the voter
+    event VoteCastPrivate(address indexed voter, uint256 proposalId, uint256 votes, string reason);
+
+    /// @notice An event emitted when a vote has been cast on a proposal
+    /// @param blocknumber The block number where vote was tallied
+    /// @param proposalId The proposal id which was voted on
+    /// @param forVotes Number of for votes
+    /// @param againstVotes Number of abstain votes
+    /// @param abstainVotes Number of against votes
+    event VoteTallied(uint256 blocknumber, uint256 proposalId, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes);        
 }
 
 contract NounsDAOProxyStorage {
@@ -353,6 +368,9 @@ contract NounsDAOStorageV2 is NounsDAOStorageV1Adjusted {
     /// @notice Pending new vetoer
     address public pendingVetoer;
 
+    /// @notice The private voting contract that tabulates and sends back voting tallies
+    address public PRIVATE_VOTING;    
+
     struct DynamicQuorumParams {
         /// @notice The minimum basis point number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed.
         uint16 minQuorumVotesBPS;
@@ -403,6 +421,20 @@ contract NounsDAOStorageV2 is NounsDAOStorageV1Adjusted {
         /// @notice The block at which this proposal was created
         uint256 creationBlock;
     }
+
+    /// @notice Possible states that a proposal may be in
+    enum ProposalStatePrivate {
+        Pending,
+        Active,
+        Canceled,
+        Defeated,
+        Succeeded,
+        Queued,
+        Expired,
+        Executed,
+        Vetoed,
+        Tallying
+    }      
 }
 
 interface INounsDAOExecutor {
