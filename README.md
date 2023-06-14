@@ -1,6 +1,6 @@
-# nouns-monorepo
+# nounsdao-privatevoting
 
-Nouns DAO is a generative avatar art collective run by a group of crypto misfits.
+Nouns DAO Private Voting is a fork of [nounsdao-monorepo](https://github.com/nounsDAO/nouns-monorepo) that integrates with Poseidon's [zkvote-contract repo](https://github.com/Poseidon-ZKP/zkvote-contract/commits/main).
 
 ## Packages
 
@@ -34,6 +34,11 @@ The [nouns webapp](packages/nouns-webapp) is the frontend for interacting with N
 
 ## Quickstart
 
+Run node v16.20.0
+```sh
+nvm install 16.20.0
+```
+
 ### Install dependencies
 
 ```sh
@@ -46,14 +51,37 @@ yarn
 yarn build
 ```
 
-### Run Linter
+### Spin up hardhat chain and deploy contracts
 
 ```sh
-yarn lint
+cd packages/nouns-contracts
+```
+```sh
+yarn task:run-local
 ```
 
-### Run Prettier
+### Spin up The Graph node using Docker
+In new terminal:
+```sh
+cd .. && cd nouns-subgraph
+```
+```sh
+yarn graph-node
+```
+
+### Spin up nouns subgraph instance
+
+In new terminal:
 
 ```sh
-yarn format
+yarh deploy:hardhat
+```
+
+### Spin up web app
+
+```sh
+cd .. && cd nouns-webapp
+```
+```sh
+yarn start
 ```
