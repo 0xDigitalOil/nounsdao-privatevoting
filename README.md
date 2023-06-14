@@ -63,7 +63,7 @@ yarn task:run-local
 ### Spin up The Graph node using Docker
 In new terminal:
 ```sh
-cd .. && cd nouns-subgraph
+cd packages/nouns-subgraph
 ```
 ```sh
 yarn graph-node
@@ -72,7 +72,9 @@ yarn graph-node
 ### Spin up nouns subgraph instance
 
 In new terminal:
-
+```sh
+cd packages/nouns-subgraph
+```
 ```sh
 yarh deploy:hardhat
 ```
