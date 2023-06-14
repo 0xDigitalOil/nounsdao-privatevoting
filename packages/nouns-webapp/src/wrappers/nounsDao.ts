@@ -42,6 +42,7 @@ export enum ProposalState {
   EXPIRED,
   EXECUTED,
   VETOED,
+  TALLYING
 }
 
 interface ProposalCallResult {
@@ -593,6 +594,7 @@ export const useCastRefundableVoteWithReason = () => {
 };
 
 export const usePropose = () => {
+  //console.log(nounsDaoContract.address);
   const { send: propose, state: proposeState } = useContractFunction(nounsDaoContract, 'propose');
   return { propose, proposeState };
 };

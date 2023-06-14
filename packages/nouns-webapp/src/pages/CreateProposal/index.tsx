@@ -149,6 +149,8 @@ const CreateProposalPage = () => {
   const handleCreateProposal = async () => {
     if (!proposalTransactions?.length) return;
 
+    //console.log(propose);
+
     await propose(
       proposalTransactions.map(({ address }) => address), // Targets
       proposalTransactions.map(({ value }) => value ?? '0'), // Values

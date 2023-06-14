@@ -26,12 +26,22 @@
   },
   {
     "inputs": [],
+    "name": "MaxTotalVotingWeightExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "MinQuorumBPSGreaterThanMaxQuorumBPS",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "PendingVetoerOnly",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PrivateVotingContractOnly",
     "type": "error"
   },
   {
@@ -497,6 +507,74 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "votes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "VoteCastPrivate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "blocknumber",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "forVotes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "againstVotes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "abstainVotes",
+        "type": "uint256"
+      }
+    ],
+    "name": "VoteTallied",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "oldVotingDelay",
@@ -747,6 +825,19 @@
   },
   {
     "inputs": [],
+    "name": "PRIVATE_VOTING",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "REFUND_BASE_GAS",
     "outputs": [
       {
@@ -768,13 +859,6 @@
   {
     "inputs": [],
     "name": "_acceptVetoer",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "_burnVetoPower",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -908,24 +992,6 @@
   },
   {
     "inputs": [],
-    "name": "_withdraw",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "admin",
     "outputs": [
       {
@@ -950,121 +1016,7 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "support",
-        "type": "uint8"
-      }
-    ],
-    "name": "castRefundableVote",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "support",
-        "type": "uint8"
-      },
-      {
-        "internalType": "string",
-        "name": "reason",
-        "type": "string"
-      }
-    ],
-    "name": "castRefundableVoteWithReason",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "support",
-        "type": "uint8"
-      }
-    ],
-    "name": "castVote",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "support",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint8",
-        "name": "v",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "r",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "s",
-        "type": "bytes32"
-      }
-    ],
-    "name": "castVoteBySig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "support",
-        "type": "uint8"
-      },
-      {
-        "internalType": "string",
-        "name": "reason",
-        "type": "string"
-      }
-    ],
-    "name": "castVoteWithReason",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
+
   {
     "inputs": [
       {
@@ -1301,6 +1253,11 @@
         "internalType": "struct NounsDAOStorageV2.DynamicQuorumParams",
         "name": "dynamicQuorumParams_",
         "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "privateVotingContract_",
+        "type": "address"
       }
     ],
     "name": "initialize",
@@ -1684,12 +1641,40 @@
         "internalType": "uint256",
         "name": "proposalId",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "forVotes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "againstVotes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "abstainVotes",
+        "type": "uint256"
+      }
+    ],
+    "name": "receiveVoteTally",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
       }
     ],
     "name": "state",
     "outputs": [
       {
-        "internalType": "enum NounsDAOStorageV1Adjusted.ProposalState",
+        "internalType": "enum NounsDAOStorageV2.ProposalStatePrivate",
         "name": "",
         "type": "uint8"
       }
@@ -1708,19 +1693,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      }
-    ],
-    "name": "veto",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

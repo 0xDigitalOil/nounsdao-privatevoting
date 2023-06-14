@@ -140,7 +140,7 @@ task('deploy-local', 'Deploy contracts to hardhat')
             maxQuorumVotesBPS: args.maxQuorumVotesBPS,
             quorumCoefficient: parseUnits(args.quorumCoefficient.toString(), 6),
           },
-          "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690", // zkvote contract on local
+          "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E", // zkvote contract on local
         ],
         waitForConfirmation: true,
       },

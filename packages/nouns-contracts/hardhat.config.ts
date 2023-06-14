@@ -41,6 +41,7 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       initialBaseFeePerGas: 0,
+      loggingEnabled: true,
     },
   },
   etherscan: {

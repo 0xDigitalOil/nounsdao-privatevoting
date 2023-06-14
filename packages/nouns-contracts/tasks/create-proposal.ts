@@ -25,6 +25,7 @@ task('create-proposal', 'Create a governance proposal')
           '# Test Proposal\n## This is a **test**.',
         )
       );
+      console.log(receipt);
       console.log('Proposal created');
     }
     catch (error) {
