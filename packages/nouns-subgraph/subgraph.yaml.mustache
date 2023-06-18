@@ -103,3 +103,5 @@ dataSources:
           handler: handleMaxQuorumVotesBPSSet        
         - event: QuorumCoefficientSet(uint32,uint32)
           handler: handleQuorumCoefficientSet
+        - event: VoteTallied(uint256,uint256,uint256,uint256,uint256)
+          handler: handleVoteTallied          

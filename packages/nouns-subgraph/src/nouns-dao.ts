@@ -9,6 +9,7 @@ import {
   MinQuorumVotesBPSSet,
   MaxQuorumVotesBPSSet,
   QuorumCoefficientSet,
+  VoteTallied,
 } from './types/NounsDAO/NounsDAO';
 import {
   getOrCreateDelegate,
@@ -219,4 +220,20 @@ export function handleQuorumCoefficientSet(event: QuorumCoefficientSet): void {
   const params = getOrCreateDynamicQuorumParams(event.block.number);
   params.quorumCoefficient = event.params.newQuorumCoefficient;
   params.save();
+}
+
+export function handleVoteTallied(event: VoteTallied): void {
+  let proposal = getOrCreateProposal(event.params.proposalId.toString());
+
+    proposal.againstVotes = event.params.againstVotes;
+
+    proposal.forVotes = event.params.forVotes;
+
+    proposal.abstainVotes = event.params.abstainVotes;
+
+  
+  if (proposal.status == STATUS_PENDING) {
+    proposal.status = STATUS_ACTIVE;
+  }
+  proposal.save();
 }
