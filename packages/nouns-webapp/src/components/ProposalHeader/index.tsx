@@ -179,11 +179,6 @@ const ProposalHeader: React.FC<ProposalHeaderProps> = props => {
         <div className={classes.mobileSubmitProposalButton}>{isActiveForVoting && voteButton}</div>
       )}
 
-      {proposal && isActiveForVoting && hasVoted && (
-        <Alert variant="success" className={classes.voterIneligibleAlert}>
-          {getTranslatedVoteCopyFromString(proposalVote)}
-        </Alert>
-      )}
 
       {proposal && isActiveForVoting && proposalCreationTimestamp && !!availableVotes && !hasVoted && (
         <Alert variant="success" className={classes.voterIneligibleAlert}>
