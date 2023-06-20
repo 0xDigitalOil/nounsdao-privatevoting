@@ -104,11 +104,11 @@ const VoteModal = ({ show, onHide, proposalId, availableVotes }: VoteModalProps)
       <div className={classes.voteModalSubtitle}>
         {availableVotes === 1 ? (
           <Trans>
-            Voting with <span className={classes.bold}>{i18n.number(availableVotes)}</span> Noun
+            Voting (privately) with <span className={classes.bold}>{i18n.number(availableVotes)}</span> Noun
           </Trans>
         ) : (
           <Trans>
-            Voting with <span className={classes.bold}>{i18n.number(availableVotes)}</span> Nouns
+            Voting (privately) with <span className={classes.bold}>{i18n.number(availableVotes)}</span> Nouns
           </Trans>
         )}
       </div>
@@ -178,7 +178,7 @@ const VoteModal = ({ show, onHide, proposalId, availableVotes }: VoteModalProps)
             />
           </div>
           <br />
-          <FloatingLabel controlId="reasonTextarea" label={<Trans>Reason (Optional)</Trans>}>
+          <FloatingLabel controlId="reasonTextarea" label={<Trans>Reason (Optional). Note that reason is not private.</Trans>}>
             <FormControl
               as="textarea"
               placeholder={
