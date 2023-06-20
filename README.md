@@ -1,6 +1,6 @@
 # nounsdao-privatevoting
 
-Nouns DAO Private Voting is a fork of [nounsdao-monorepo](https://github.com/nounsDAO/nouns-monorepo) that integrates with the 0xDigitalOil/nounsdao-integration branch[https://github.com/Poseidon-ZKP/zkvote-contract/tree/0xDigitalOil/nouns-integration] of Poseidon's [zkvote-contract repo](https://github.com/Poseidon-ZKP/zkvote-contract/commits/main).
+Nouns DAO Private Voting is a fork of [nounsdao-monorepo](https://github.com/nounsDAO/nouns-monorepo) that integrates with the [0xDigitalOil/nounsdao-integration branch](https://github.com/Poseidon-ZKP/zkvote-contract/tree/0xDigitalOil/nouns-integration) of Poseidon's [zkvote-contract repo](https://github.com/Poseidon-ZKP/zkvote-contract/commits/main).
 
 ## Packages
 
