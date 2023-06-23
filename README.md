@@ -34,7 +34,7 @@ The [nouns webapp](packages/nouns-webapp) is the frontend for interacting with N
 
 ## Quickstart
 
-Run node v16.20.0 using nvm. (Install nvm)[https://tecadmin.net/install-nvm-macos-with-homebrew/] if you don't have it.
+Run node v16.20.0 using nvm. [Install nvm](https://tecadmin.net/install-nvm-macos-with-homebrew/) if you don't have it.
 ```sh
 nvm install 16.20.0
 ```
@@ -92,7 +92,7 @@ yarn start
 ```
 
 ### Set up Metamask addresses
-(Connect your Metamask)[https://github.com/0xDigitalOil/nounsdao-privatevoting/tree/master/packages/nouns-webapp] to the local Hardhat network.
+[Connect your Metamask](https://github.com/0xDigitalOil/nounsdao-privatevoting/tree/master/packages/nouns-webapp) to the local Hardhat network.
 
 NOTE: Only use these private keys for testing purposes. These are publicly known keys.
 Voter 1
