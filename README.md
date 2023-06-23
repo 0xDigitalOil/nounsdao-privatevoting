@@ -34,7 +34,7 @@ The [nouns webapp](packages/nouns-webapp) is the frontend for interacting with N
 
 ## Quickstart
 
-Run node v16.20.0
+Run node v16.20.0 using nvm. (Install nvm)[https://tecadmin.net/install-nvm-macos-with-homebrew/] if you don't have it.
 ```sh
 nvm install 16.20.0
 ```
@@ -76,7 +76,7 @@ In new terminal:
 cd packages/nouns-subgraph
 ```
 ```sh
-yarh deploy:hardhat
+yarn deploy:hardhat
 ```
 
 ### Spin up web app
