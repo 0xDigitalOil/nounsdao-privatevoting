@@ -85,5 +85,8 @@ yarn deploy:hardhat
 cd .. && cd nouns-webapp
 ```
 ```sh
+cp .env.example.local .env
+```
+```sh
 yarn start
 ```
