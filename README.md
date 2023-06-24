@@ -64,6 +64,7 @@ yarn task:run-local
 
 ### Spin up The Graph node using Docker
 > **Note**
+>
 > If this is not the first time running this app, nuke the `packages/nouns-subgraph/data` directory before spinning up the graph node. 
 
 In new terminal:
@@ -98,9 +99,11 @@ yarn start
 [Connect your Metamask](https://github.com/0xDigitalOil/nounsdao-privatevoting/tree/master/packages/nouns-webapp) to the recently booted local Hardhat network.
 
 > **Warning**
+>
 > Only use these private keys for testing purposes. These are publicly known keys. 
 
 Set up the following accounts in Metamask by importing their private keys:
+
 Voter 1
 ```sh
 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
