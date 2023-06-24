@@ -63,6 +63,7 @@ yarn task:run-local
 ### Spin up The Graph node using Docker
 > **Note**
 > If this is not the first time running this app, nuke the `packages/nouns-subgraph/data` directory before spinning up the graph node. 
+
 In new terminal:
 ```sh
 cd packages/nouns-subgraph
@@ -96,6 +97,7 @@ yarn start
 
 > **Warning**
 > Only use these private keys for testing purposes. These are publicly known keys. 
+
 Set up the following accounts in Metamask by importing their private keys:
 Voter 1
 ```sh
