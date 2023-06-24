@@ -61,6 +61,7 @@ yarn task:run-local
 ```
 
 ### Spin up The Graph node using Docker
+IMPORTANT: If this is not the first time running this app, nuke the `packages/nouns-subgraph/data` directory before spinning up the graph node. 
 In new terminal:
 ```sh
 cd packages/nouns-subgraph
@@ -78,6 +79,7 @@ cd packages/nouns-subgraph
 ```sh
 yarn deploy:hardhat
 ```
+Remember to press (enter) to allow the process to finish.
 
 ### Spin up web app
 
