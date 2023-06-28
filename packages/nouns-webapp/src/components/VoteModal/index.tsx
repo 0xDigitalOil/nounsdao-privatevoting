@@ -12,6 +12,7 @@ import clsx from 'clsx';
 import { Trans } from '@lingui/macro';
 import { i18n } from '@lingui/core';
 import SolidColorBackgroundModal from '../SolidColorBackgroundModal';
+import {  get_vote } from '../../../../../zkvote-contract/scripts/voteDAOui';
 
 interface VoteModalProps {
   show: boolean;
@@ -19,6 +20,12 @@ interface VoteModalProps {
   proposalId: string | undefined;
   availableVotes: number;
 }
+
+type SolidityEncryptedVotes = [
+  [BigNumberish, BigNumberish],
+  [BigNumberish, BigNumberish],
+  [BigNumberish, BigNumberish]
+];
 
 const POST_SUCCESSFUL_VOTE_MODAL_CLOSE_TIME_MS = 3000;
 
@@ -197,10 +204,29 @@ const VoteModal = ({ show, onHide, proposalId, availableVotes }: VoteModalProps)
               }
               setIsLoading(true);
               const isReasonEmpty = voteReason.trim() === '';
+
+              let formattedVote = '';  
+              switch (vote) {
+                case Vote.FOR:
+                  formattedVote = 'yay';
+                  break;
+                case Vote.AGAINST:
+                  formattedVote = 'nay';
+                  break;
+                case Vote.ABSTAIN:
+                  formattedVote = 'abstain';
+                  break;
+              }
+
+              // Calculate ZK proof
+              const voteRecordAndProof = await get_vote(Number(proposalId), './dkg.config.json', './nounsdao.config.json', 'http://127.0.0.1:8545/', 1, formattedVote);
+
+              console.log(voteRecordAndProof);
+
               if (isReasonEmpty) {
-                castRefundableVote(proposalId, vote);
+                castRefundableVote(proposalId, voteRecordAndProof.R, voteRecordAndProof.M, voteRecordAndProof.proof.a, voteRecordAndProof.proof.b, voteRecordAndProof.proof.c);
               } else {
-                castRefundableVoteWithReason(proposalId, vote, voteReason);
+                castRefundableVoteWithReason(proposalId, voteRecordAndProof.R, voteRecordAndProof.M, voteRecordAndProof.proof.a, voteRecordAndProof.proof.b, voteRecordAndProof.proof.c, voteReason);
               }
             }}
             className={vote === undefined ? classes.submitBtnDisabled : classes.submitBtn}
