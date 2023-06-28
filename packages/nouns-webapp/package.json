@@ -76,7 +76,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "yarn i18n:compile && react-scripts build",
+    "compile:zkvote": "tsc -b src/zkvote-contract/tsconfig.json",
+    "build": "yarn compile:zkvote && yarn i18n:compile && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "prepare": "yarn i18n:compile",

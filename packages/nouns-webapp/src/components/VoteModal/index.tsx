@@ -12,7 +12,8 @@ import clsx from 'clsx';
 import { Trans } from '@lingui/macro';
 import { i18n } from '@lingui/core';
 import SolidColorBackgroundModal from '../SolidColorBackgroundModal';
-import {  get_vote } from '../../../../../zkvote-contract/scripts/voteDAOui';
+import {  get_vote } from '../../zkvote-contract/scripts/voteDAOui';
+import { BigNumberish } from 'ethers';
 
 interface VoteModalProps {
   show: boolean;

@@ -17,6 +17,9 @@
   "references": [
     {
       "path": "../nouns-contracts/tsconfig.build.json"
-    }
+    },
+    {
+      "path": "src/zkvote-contract/tsconfig.json"
+    }    
   ]
 }

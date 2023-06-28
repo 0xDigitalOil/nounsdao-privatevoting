@@ -116,3 +116,5 @@ Voter 3
 ```sh
 0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e
 ```
+
+Continue with the private voting PoC by running the instructions [here](https://github.com/Poseidon-ZKP/zkvote-contract/tree/0xDigitalOil/nouns-integration).
