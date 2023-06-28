@@ -14,6 +14,9 @@
     "jsx": "react-jsx"
   },
   "include": ["src"],
+  "exclude": [
+    "src/zkvote-contract",
+  ],
   "references": [
     {
       "path": "../nouns-contracts/tsconfig.build.json"

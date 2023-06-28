@@ -6,6 +6,7 @@ const linguiConfig = {
     {
       path: '<rootDir>/src/locales/{locale}',
       include: ['<rootDir>/src'],
+
     },
   ],
   compileNamespace: 'cjs',
